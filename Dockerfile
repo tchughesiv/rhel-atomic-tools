@@ -7,23 +7,19 @@ LABEL name="rhel-atomic-tools" \
       version="1" \
       release="1"
 
+ENV S2I_VERSION=v1.1.6 \
+    GIT_COMMIT=f519129
+
 RUN microdnf --enablerepo=rhel-7-server-rpms --enablerepo=rhel-7-server-optional-rpms \
-    install --nodocs git tar && \
+    install --nodocs tar gzip && \
     microdnf clean all
 
-ENV APP_ROOT=/opt/app-root \
-    USER_NAME=default \
-    USER_UID=10001 \
-    S2I_VERSION=v1.1.6
-
-ENV APP_HOME=${APP_ROOT}/src  PATH=$PATH:${APP_ROOT}/bin
-RUN mkdir -p ${APP_HOME} ${APP_ROOT}/bin
-# COPY bin/ ${APP_ROOT}/bin/
-
-RUN curl -o ${APP_ROOT}/s2i.tar.gz -SL https://github.com/openshift/source-to-image/archive/${S2I_VERSION}.tar.gz \
+RUN curl -o /tmp/s2i.tar.gz -SL \
+      https://github.com/openshift/source-to-image/releases/download/${S2I_VERSION}/source-to-image-${S2I_VERSION}-${GIT_COMMIT}-linux-amd64.tar.gz \
       --retry 9 --retry-max-time 0 -C - && \
-    chmod -R ug+x ${APP_ROOT}/bin /tmp/user_setup && \
-    /tmp/user_setup
+    tar xvfz /tmp/s2i.tar.gz -C /usr/bin && \
+    rm -f /tmp/s2i.tar.gz && \
+    chmod +x /usr/bin/s2i
 
 # USER ${USER_UID}
 # WORKDIR ${APP_ROOT}
